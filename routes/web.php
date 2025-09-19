@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SalaController;
+use App\Http\Controllers\SalaInviteController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -42,3 +43,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/dm/{user}', [MessageController::class, 'storeDm'])
         ->name('mensagens.dm.store');
 });
+
+Route::middleware('auth')->group(function () {
+    Route::post('/salas/{sala}/invites', [SalaInviteController::class, 'store'])->name('salas.invites.store');
+    Route::delete('/invites/{invite}',   [SalaInviteController::class, 'disable'])->name('salas.invites.disable');
+});
+
+// link público (pode exigir login no meio do caminho)
+Route::get('/i/{token}', [SalaInviteController::class, 'accept'])->name('salas.invites.accept');

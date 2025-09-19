@@ -21,6 +21,22 @@ class ChatController extends Controller
 			->orWhere('user_b_id', $user->id)
 			->get();
 
+		// Mapa de "dm_key" => outro usuário (com avatar) para exibir na sidebar
+		$dmUsers = collect();
+		if ($dmPairs->isNotEmpty()) {
+			$otherIds = $dmPairs->map(
+				fn($p) =>
+				$p->user_a_id === $user->id ? $p->user_b_id : $p->user_a_id
+			)->unique()->values();
+
+			$usersById = \App\Models\User::whereIn('id', $otherIds)->get()->keyBy('id');
+
+			$dmUsers = $dmPairs->mapWithKeys(function ($p) use ($user, $usersById) {
+				$otherId = $p->user_a_id === $user->id ? $p->user_b_id : $p->user_a_id;
+				return [$p->dm_key => $usersById->get($otherId)];
+			});
+		}
+
 		// Seleção atual
 		$activeSala = null;
 		$activeDmKey = null;
@@ -54,6 +70,7 @@ class ChatController extends Controller
 		return view('chat.index', [
 			'salas'        => $salas,
 			'dmPairs'      => $dmPairs,
+			'dmUsers'      => $dmUsers,
 			'activeSala'   => $activeSala,
 			'activeDmKey'  => $activeDmKey,
 			'mensagens'    => $mensagens,
